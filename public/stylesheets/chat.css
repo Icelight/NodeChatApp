@@ -1,0 +1,12 @@
+div#chatContainer {
+    height: 80%;
+    min-height: 80%;
+}
+
+div#chatbox {
+    height: 90%;
+    width: 30em;
+    border-color: black;
+    border-width: 3px;
+    border-style: outset;
+}
