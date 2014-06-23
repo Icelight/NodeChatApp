@@ -9,4 +9,28 @@ div#chatbox {
     border-color: black;
     border-width: 3px;
     border-style: outset;
+    overflow-y: auto;
+}
+
+div#chatbox p {
+    border-radius: 5px;
+    display: inline-block;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    margin-left: 1em;
+    margin-right: 1em;   
+}
+
+p.ext-message {
+    background-color: rgba(12, 217, 91, 0.4);
+    float: left;
+    clear: both;
+}
+
+p.my-message {
+    background-color: rgba(12, 91, 271, 0.4);
+    float: right;
+    clear: both;
 }

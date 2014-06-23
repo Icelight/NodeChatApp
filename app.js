@@ -77,7 +77,8 @@ io.on('connection', function(socket) {
     socket.on('message', function(message) {
         console.log('Received message: ' + message.message + ' from user: ' + message.user);
 
-        io.sockets.emit('message', message);
+        socket.broadcast.emit('message', message);
+        socket.emit('message-sent', {'success': 'true', 'message': message.message});
     });
 });
 

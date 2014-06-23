@@ -1,13 +1,25 @@
 var socket = io();
 
+function addMessage(message, cssClass) {
+    var chatbox = $('#chatbox');
+    chatbox.append('<p class="' + cssClass + '">' + message + '</p>');
+    chatbox.scrollTop = chatbox.scrollHeight;
+}
+
 $(document).ready(function() {
     socket.emit('init', 'init');
 
     socket.on('message', function(message) {
         console.log(message);
 
-        $('#chatbox').append('<p>' + message.message + '</p>');
+        addMessage(message.message, 'ext-message');
     });
+
+    socket.on('message-sent', function(result) {
+        if (result.success) {
+            addMessage(result.message, 'my-message');
+        }
+    })
 
     $('#chatForm').submit(function(e) {
         e.preventDefault();
