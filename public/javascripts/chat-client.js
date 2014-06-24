@@ -1,25 +1,41 @@
 var socket = io();
 
-function addMessage(message, cssClass) {
-    var chatbox = $('#chatbox');
-    chatbox.append('<p class="' + cssClass + '">' + message + '</p>');
-    chatbox.scrollTop = chatbox.scrollHeight;
+function addMessage(parent, message, cssClass, autoScroll) {
+    parent.append('<p class="' + cssClass + '">' + message + '</p>');
+
+    if (autoScroll) {
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
 }
 
 $(document).ready(function() {
-    socket.emit('init', 'init');
+    var chatbox = $('#chatbox');
+    var userbox = $('#userContainer');
+
+    socket.emit('init', {'username': 'test-user'});
 
     socket.on('message', function(message) {
         console.log(message);
 
-        addMessage(message.message, 'ext-message');
+        addMessage(chatbox, message.message, 'ext-message', true);
     });
 
     socket.on('message-sent', function(result) {
         if (result.success) {
-            addMessage(result.message, 'my-message');
+            addMessage(chatbox, result.message, 'my-message', true);
         }
-    })
+    });
+
+    socket.on('userlist', function(userlist) {
+        console.log("Recieved user list: ");
+        console.log(userlist);
+
+        for (var key in userlist) {
+            if (userlist.hasOwnProperty(key)){
+                addMessage(userbox, userlist[key], '', false);
+            }
+        }
+    });
 
     $('#chatForm').submit(function(e) {
         e.preventDefault();
@@ -27,6 +43,7 @@ $(document).ready(function() {
         var message = $('#messageInput').val();
 
         if (message && message.length > 0) {
+            $('#messageInput').val("");
             socket.emit('message', {'user': 'testuser', 'message': message});
         }
     });

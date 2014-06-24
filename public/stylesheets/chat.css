@@ -1,26 +1,40 @@
 div#chatContainer {
     height: 80%;
     min-height: 80%;
+    width: 30em;
+    float: left;
 }
 
 div#chatbox {
     height: 90%;
-    width: 30em;
     border-color: black;
     border-width: 3px;
     border-style: outset;
     overflow-y: auto;
 }
 
-div#chatbox p {
+div#userContainer {
+    height: 75%;
+    width: 15em;
+    margin-left: 2em;
+    border-color: black;
+    border-width: 3px;
+    border-style: solid;
+    overflow-y: auto;
+    float: left;
+}
+
+div#chatbox > p {
     border-radius: 5px;
     display: inline-block;
     padding-left: 0.5em;
     padding-right: 0.5em;
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
+    padding-top: 0.1em;
+    padding-bottom: 0.1em;
     margin-left: 1em;
-    margin-right: 1em;   
+    margin-right: 1em; 
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;  
 }
 
 p.ext-message {
@@ -31,6 +45,11 @@ p.ext-message {
 
 p.my-message {
     background-color: rgba(12, 91, 271, 0.4);
+    float: right;
+    clear: both;
+}
+
+p.username {
     float: right;
     clear: both;
 }

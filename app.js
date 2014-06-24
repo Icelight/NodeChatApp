@@ -15,7 +15,7 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
-var chat = require('./routes/chat');
+var chat = require('./routes/chat')(io, express);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -60,25 +60,6 @@ app.use(function(err, req, res, next) {
     res.render('error', {
         message: err.message,
         error: {}
-    });
-});
-
-io.on('connection', function(socket) {
-    console.log("A user has connected to socket.io");
-
-    socket.on('disconnect', function() {
-        console.log('A user has disconnected from socket.io');
-    });
-
-    socket.on('init', function() {
-        socket.emit('message', {'user': 'system', 'message': 'Welcome to the chat!'});
-    });
-
-    socket.on('message', function(message) {
-        console.log('Received message: ' + message.message + ' from user: ' + message.user);
-
-        socket.broadcast.emit('message', message);
-        socket.emit('message-sent', {'success': 'true', 'message': message.message});
     });
 });
 
