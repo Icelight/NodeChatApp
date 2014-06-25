@@ -8,6 +8,10 @@ function addMessage(parent, message, cssClass, autoScroll) {
     }
 }
 
+function removeUser(userElement, username) {
+    $('#' + userElement.id + '>p:contains("username"').remove();
+}
+
 $(document).ready(function() {
     var chatbox = $('#chatbox');
     var userbox = $('#userContainer');
@@ -20,6 +24,10 @@ $(document).ready(function() {
         addMessage(chatbox, message.message, 'ext-message', true);
     });
 
+    socket.on('sys-message', function(message) {
+        addMessage(chatbox, message.message, 'sys-message', true);
+    });
+
     socket.on('message-sent', function(result) {
         if (result.success) {
             addMessage(chatbox, result.message, 'my-message', true);
@@ -30,11 +38,19 @@ $(document).ready(function() {
         console.log("Recieved user list: ");
         console.log(userlist);
 
-        for (var key in userlist) {
-            if (userlist.hasOwnProperty(key)){
-                addMessage(userbox, userlist[key], '', false);
-            }
+        for (i = 0; i < userlist.length; i++) {
+            addMessage(userbox, userlist[i], 'username', false);
         }
+    });
+
+    socket.on('user-joined', function(user) {
+        addMessage(userbox, user.username, 'username', false);
+        addMessage(chatbox, user.username + ' has joined the chat', 'sys-message', true);
+    });
+
+    socket.on('user-left', function(user) {
+        removeUser(userbox, user.username);
+        addMessage(chatbox, user.username + ' has left the chat', 'sys-message', true);
     });
 
     $('#chatForm').submit(function(e) {
@@ -44,7 +60,7 @@ $(document).ready(function() {
 
         if (message && message.length > 0) {
             $('#messageInput').val("");
-            socket.emit('message', {'user': 'testuser', 'message': message});
+            socket.emit('send-message', {'user': 'testuser', 'message': message});
         }
     });
 });

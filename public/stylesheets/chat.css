@@ -11,6 +11,28 @@ div#chatbox {
     border-width: 3px;
     border-style: outset;
     overflow-y: auto;
+    text-align: center;
+}
+
+#chatForm > input[type=text] {
+    border: 3px solid gray; 
+    -webkit-box-shadow: 
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1); 
+    -moz-box-shadow: 
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1); 
+    box-shadow: 
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1); 
+    padding: 5px;
+    background: rgba(255,255,255,0.5);
+    margin: 10px 0 10px 0;
+    width: 75%;
+}
+
+#chatForm > button[type=submit] {
+    padding: 5px;
 }
 
 div#userContainer {
@@ -35,21 +57,29 @@ div#chatbox > p {
     margin-right: 1em; 
     margin-top: 0.25em;
     margin-bottom: 0.25em;  
+    text-align: left;
+    clear: both;
 }
 
-p.ext-message {
+div#chatbox > p.ext-message {
     background-color: rgba(12, 217, 91, 0.4);
     float: left;
-    clear: both;
 }
 
-p.my-message {
+div#chatbox > p.my-message {
     background-color: rgba(12, 91, 271, 0.4);
     float: right;
-    clear: both;
+}
+
+div#chatbox > p.sys-message {
+    background-color: rgba(250, 128, 114, 0.6);
+    text-align: center;
+    display: block;
+    opacity: 0.5;
 }
 
 p.username {
-    float: right;
+    float: left;
     clear: both;
+    margin-left: 0.25em;
 }
