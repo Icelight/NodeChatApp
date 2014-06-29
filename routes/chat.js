@@ -3,6 +3,9 @@ module.exports = function(io, express) {
     var userSocketMap = {};
     var usernames = [];
 
+    var lastMessages = [];
+    var numMessagesToSave = 5;
+
     /* GET chat page */
     router.get('/', function(req, res) {
       res.render('chat', { title: 'My Simple Chat' });
@@ -37,8 +40,14 @@ module.exports = function(io, express) {
                 usernames.push(info.username);
 
                 //Send the welcome message and a list of all current users to the new user.
-                socket.emit('sys-message', {'user': 'system', 'message': 'Welcome to the chat!'});  
+                socket.emit('message', {'user': 'system', 'message': 'Welcome to the chat!'});  
                 socket.emit('userlist', usernames);
+
+                //Send the historical list of messages if there are any
+                if (lastMessages.length > 0) {
+                    var messages = JSON.stringify(lastMessages);
+                    socket.emit('messages', messages);
+                }   
 
                 //Send the new user to all current clients
                 socket.broadcast.emit('user-joined', {'username': info.username}); 
@@ -47,6 +56,12 @@ module.exports = function(io, express) {
 
         socket.on('send-message', function(message) {
             console.log('Received message: ' + message.message + ' from user: ' + message.user);
+
+            lastMessages.push(message);
+
+            if (lastMessages.length > numMessagesToSave) {
+                lastMessages.shift();
+            }
 
             socket.broadcast.emit('message', message);
             socket.emit('message-sent', {'success': 'true', 'message': message.message});
