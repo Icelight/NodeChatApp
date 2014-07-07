@@ -13,9 +13,28 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
-var users = require('./routes/users');
-var chat = require('./routes/chat')(io, express);
+var routes = require('./routes/index')(app, passport);
+var users = require('./routes/users')(app, passport);
+var chat = require('./routes/chat')(app, passport, io, express);
+
+var passport = require('passport');
+var mongoose = require('mongoose');
+var session = require('express-session');
+var flash = require('connect-flash');
+
+// -- Configuration --
+
+var configDB = require('./config/database.js');
+mongoose.connect(configDB.url);
+
+//require('./config/passport')(passport);
+
+//The following is required for passport
+app.use(cookieParser());
+app.use(session({ secret: 'JSSHddfe34@@HJ3d$#$@8398%*35KJVASBV83#%#%bvsv*'}));
+app.use(passport.initialize());
+app.use(passport.session()); 
+app.use(flash());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -25,7 +44,6 @@ app.use(favicon());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);

@@ -8,7 +8,7 @@ function addMessage(parent, message, cssClass, autoScroll) {
     }
 }
 
-function getClass(message) {
+function getMessageClass(message) {
     return message.user === 'system' ? 'sys-message' : 'ext-message';
 }
 
@@ -23,14 +23,14 @@ $(document).ready(function() {
     socket.emit('init', {'username': 'test-user'});
 
     socket.on('message', function(message) {
-        addMessage(chatbox, message.message, getClass(message), true);
+        addMessage(chatbox, message.message, getMessageClass(message), true);
     });
 
     socket.on('messages', function(messages) {
         var parsedMessages = JSON.parse(messages);
 
         for (i = 0; i < parsedMessages.length; i++) {
-            addMessage(chatbox, parsedMessages[i].message, getClass(parsedMessages[i]), true);
+            addMessage(chatbox, parsedMessages[i].message, getMessageClass(parsedMessages[i]), true);
         }
     });
 

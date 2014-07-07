@@ -1,4 +1,4 @@
-module.exports = function(io, express) {
+module.exports = function(app, passport, io, express) {
     var router = express.Router();
     var userSocketMap = {};
     var usernames = [];

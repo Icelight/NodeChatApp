@@ -1,9 +1,21 @@
-var express = require('express');
-var router = express.Router();
+module.exports = function(app, passport) {
 
-/* GET users listing. */
-router.get('/', function(req, res) {
-  res.send('respond with a resource');
-});
+    var express = require('express');
+    var router = express.Router();
 
-module.exports = router;
+    /* Get Profile */
+    app.get('/profile/:user', isLoggedIn, function(req, res) {
+        res.render('profile', { user: req.params.user });
+    });
+
+    function isLoggedIn(req, res, next) {
+        if (req.isAuthenticated()) {
+            return next();
+        }
+
+        res.redirect('/');
+    }
+
+    return router;
+
+}
