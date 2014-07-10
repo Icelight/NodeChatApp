@@ -1,6 +1,5 @@
-module.exports = function(app, passport) {
+module.exports = function(app, passport, express) {
 
-    var express = require('express');
     var router = express.Router();
 
     /* Home page */
@@ -20,9 +19,11 @@ module.exports = function(app, passport) {
         res.render('signup', { message: req.flash('signupMessage'), title: 'Sign up for Simple Chat'});
     });
 
-    app.post('/signup', function(req, res) {
-
-    });
+    app.post('/signup', passport.authenticate('local-signup', {
+        successRedirect: '/chat',
+        failureRedirect: '/signup',
+        failureFlash: true
+    }));
 
     app.get('/logout', function(req, res) {
         req.logout();

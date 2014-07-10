@@ -1,6 +1,5 @@
-module.exports = function(app, passport) {
+module.exports = function(app, passport, express) {
 
-    var express = require('express');
     var router = express.Router();
 
     /* Get Profile */

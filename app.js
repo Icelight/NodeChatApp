@@ -3,48 +3,50 @@ var express = require('express'),
 
 var port = process.env.PORT || 3000;
 
-var app = express();
-var server = app.listen(port);
-var io = require('socket.io').listen(server);
-
 var path = require('path');
 var favicon = require('static-favicon');
+
+var mongoose = require('mongoose');
+var passport = require('passport');
+var flash = require('connect-flash');
+
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-var routes = require('./routes/index')(app, passport);
-var users = require('./routes/users')(app, passport);
-var chat = require('./routes/chat')(app, passport, io, express);
-
-var passport = require('passport');
-var mongoose = require('mongoose');
 var session = require('express-session');
-var flash = require('connect-flash');
+
+var app = express();
+var server = app.listen(port);
+var io = require('socket.io').listen(server);
 
 // -- Configuration --
 
 var configDB = require('./config/database.js');
 mongoose.connect(configDB.url);
 
-//require('./config/passport')(passport);
+require('./config/passport')(passport);
 
 //The following is required for passport
+app.use(flash());
 app.use(cookieParser());
+app.use(bodyParser());
+
 app.use(session({ secret: 'JSSHddfe34@@HJ3d$#$@8398%*35KJVASBV83#%#%bvsv*'}));
 app.use(passport.initialize());
 app.use(passport.session()); 
-app.use(flash());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-app.use(favicon());
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded());
+
+var path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
+
+var routes = require('./routes/index')(app, passport, express);
+var users = require('./routes/users')(app, passport, express);
+var chat = require('./routes/chat')(app, passport, io, express);
 
 app.use('/', routes);
 app.use('/users', users);
