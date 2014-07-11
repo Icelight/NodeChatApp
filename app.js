@@ -4,10 +4,10 @@ var express = require('express'),
 var port = process.env.PORT || 3000;
 
 var path = require('path');
+var passport = require('passport');
 var favicon = require('static-favicon');
 
 var mongoose = require('mongoose');
-var passport = require('passport');
 var flash = require('connect-flash');
 
 var logger = require('morgan');
@@ -24,8 +24,6 @@ var io = require('socket.io').listen(server);
 var configDB = require('./config/database.js');
 mongoose.connect(configDB.url);
 
-require('./config/passport')(passport);
-
 //The following is required for passport
 app.use(flash());
 app.use(cookieParser());
@@ -34,6 +32,8 @@ app.use(bodyParser());
 app.use(session({ secret: 'JSSHddfe34@@HJ3d$#$@8398%*35KJVASBV83#%#%bvsv*'}));
 app.use(passport.initialize());
 app.use(passport.session()); 
+
+require('./config/passport')(passport);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

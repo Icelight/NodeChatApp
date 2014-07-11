@@ -1,4 +1,4 @@
-var localStrategy = require('passport-local').Strategy;
+var LocalStrategy = require('passport-local').Strategy;
 
 var User = require('../models/user');
 
@@ -21,28 +21,27 @@ module.exports = function(passport) {
     },
 
     function(req, username, password, doneCallback) {
-        process.nextTick(function() {
-            User.findOne( { 'localUser.username' : username }, function(err, user) {
-                if (err) {
-                    return doneCallback(err);
-                }
+        console.log("Received signup request from username: " + username);
+        User.findOne( { 'localUser.username' : username }, function(err, user) {
+            if (err) {
+                return doneCallback(err);
+            }
 
-                if (user) {
-                    return doneCallback(null, false, req.flash('signupMessage', 'That username is already in use'));
-                } else {
-                    var newUser = new User();
-                    newUser.localUser.username = username;
-                    newUser.localUser.password = newUser.generateHash(password);
+            if (user) {
+                return doneCallback(null, false, req.flash('signupMessage', 'That username is already in use'));
+            } else {
+                var newUser = new User();
+                newUser.localUser.username = username;
+                newUser.localUser.password = newUser.generateHash(password);
 
-                    newUser.save(function(err) { 
-                        if (err) {
-                            throw err;
-                        }
+                newUser.save(function(err) { 
+                    if (err) {
+                        throw err;
+                    }
 
-                        return doneCallback(null, newUser);
-                    });
-                }
-            });
+                    return doneCallback(null, newUser);
+                });
+            }
         });
     }));
 };
