@@ -18,30 +18,53 @@ module.exports = function(passport) {
         usernameField : 'username',
         passwordField : 'password',
         passReqToCallback : true
-    },
+        },
 
-    function(req, username, password, doneCallback) {
-        console.log("Received signup request from username: " + username);
-        User.findOne( { 'localUser.username' : username }, function(err, user) {
-            if (err) {
-                return doneCallback(err);
-            }
+        function(req, username, password, doneCallback) {
+            console.log("Received signup request from username: " + username);
+            User.findOne( { 'localUser.username' : username }, function(err, user) {
+                if (err) {
+                    return doneCallback(err);
+                }
 
-            if (user) {
-                return doneCallback(null, false, req.flash('signupMessage', 'That username is already in use'));
-            } else {
-                var newUser = new User();
-                newUser.localUser.username = username;
-                newUser.localUser.password = newUser.generateHash(password);
+                if (user) {
+                    return doneCallback(null, false, req.flash('signupMessage', 'That username is already in use'));
+                } else {
+                    var newUser = new User();
+                    newUser.localUser.username = username;
+                    newUser.localUser.password = newUser.generateHash(password);
 
-                newUser.save(function(err) { 
-                    if (err) {
-                        throw err;
-                    }
+                    newUser.save(function(err) { 
+                        if (err) {
+                            throw err;
+                        }
 
-                    return doneCallback(null, newUser);
-                });
-            }
-        });
-    }));
+                        return doneCallback(null, newUser);
+                    });
+                }
+            });
+        })
+    );
+
+    passport.use('local-login', new LocalStrategy({
+        usernameField : 'username',
+        passwordField : 'password',
+        passReqToCallback : true
+        },
+        function (req, username, password, doneCallback) {
+            console.log("Received login request from username: " + username);
+
+            User.findOne( { 'localUser.username' : username }, function(err, user) {
+                if (err) {
+                    return doneCallback(err);
+                }
+
+                if (!user || !user.validatePassword(password)) {
+                    return doneCallback(null, false, req.flash('loginMessage', 'No user was found or an incorrect password was entered'));
+                } 
+
+                return doneCallback(null, user);
+            });
+        }
+    ));
 };

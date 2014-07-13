@@ -8,9 +8,10 @@ block content
     div
         h2= "Please choose a username and password!"
 
-        div#errorMessageDiv
+        unless message.length <= 0
+            div#errorMessageDiv #{message}
 
-        form#loginForm(action='/signup',method='POST')
+        form#signupForm(action='/signup',method='POST')
             label(for="username") Username
             input#username(type="text" name="username" maxlength="24")
             label(for="password") Password

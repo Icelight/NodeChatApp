@@ -11,9 +11,11 @@ module.exports = function(app, passport, express) {
         res.render('login', { message: req.flash('loginMessage'), title: 'Log in to Simple Chat'});
     });
 
-    app.post('/login', function(req, res) {
-
-    });
+    app.post('/login', passport.authenticate('local-login', {
+        successRedirect: '/chat',
+        failureRedirect: '/login',
+        failureFlash: true
+    }));
 
     app.get('/signup', function(req, res) {
         res.render('signup', { message: req.flash('signupMessage'), title: 'Sign up for Simple Chat'});

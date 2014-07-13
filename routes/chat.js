@@ -1,3 +1,5 @@
+var Authentication = require('../config/auth.js');
+
 module.exports = function(app, passport, io, express) {
     var router = express.Router();
     var userSocketMap = {};
@@ -7,8 +9,8 @@ module.exports = function(app, passport, io, express) {
     var numMessagesToSave = 5;
 
     /* GET chat page */
-    router.get('/', function(req, res) {
-      res.render('chat', { title: 'My Simple Chat' });
+    router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
+      res.render('chat', { title: 'My Simple Chat', user: req.user });
     });
 
     io.on('connection', function(socket) {
