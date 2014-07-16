@@ -14,6 +14,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var MongoStore = require('connect-mongostore')(session);
 
 var app = express();
 var server = app.listen(port);
@@ -29,7 +30,13 @@ app.use(flash());
 app.use(cookieParser());
 app.use(bodyParser());
 
-app.use(session({ secret: 'JSSHddfe34@@HJ3d$#$@8398%*35KJVASBV83#%#%bvsv*'}));
+app.use(session({
+    store: new MongoStore({ db: mongoose.connection.db }),
+    secret: 'thisismysupersecret',
+    clear_interval: 900,
+    cookie: {maxAge: 60 * 60 * 1000 * 20}
+}));
+
 app.use(passport.initialize());
 app.use(passport.session()); 
 

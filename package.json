@@ -19,6 +19,7 @@
     "passport-local": "latest",
     "bcrypt-nodejs" : "latest",
     "mongoose": "latest",
-    "connect-flash": "latest"
+    "connect-flash": "latest",
+    "connect-mongostore": "latest"
   }
 }

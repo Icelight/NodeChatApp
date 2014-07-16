@@ -10,7 +10,8 @@ module.exports = function(app, passport, io, express) {
 
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
-      res.render('chat', { title: 'My Simple Chat', user: req.user });
+        console.log("User: " + req.session.passport.user + " has connected to the chat.");
+        res.render('chat', { title: 'My Simple Chat', user: req.user });
     });
 
     io.on('connection', function(socket) {
