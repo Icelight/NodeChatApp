@@ -34,7 +34,7 @@ app.use(session({
     store: new MongoStore({ db: mongoose.connection.db }),
     secret: 'thisismysupersecret',
     clear_interval: 900,
-    cookie: {maxAge: 60 * 60 * 1000 * 20}
+    cookie: {maxAge: 1000 * 60 * 60 * 2}
 }));
 
 app.use(passport.initialize());
@@ -53,7 +53,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var routes = require('./routes/index')(app, passport, express);
 var users = require('./routes/users')(app, passport, express);
-var chat = require('./routes/chat')(app, passport, io, express);
+var chat = require('./routes/chat')(app, passport, io, express, MongoStore);
 
 app.use('/', routes);
 app.use('/users', users);

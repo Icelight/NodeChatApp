@@ -1,6 +1,6 @@
 var Authentication = require('../config/auth.js');
 
-module.exports = function(app, passport, io, express) {
+module.exports = function(app, passport, io, express, sessionStore) {
     var router = express.Router();
     var userSocketMap = {};
     var usernames = [];
@@ -11,7 +11,11 @@ module.exports = function(app, passport, io, express) {
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
         console.log("User: " + req.session.passport.user + " has connected to the chat.");
+        console.log(req.session);
+        console.log(req.user);
         res.render('chat', { title: 'My Simple Chat', user: req.user });
+
+        req.session.lastAccess = new Date().getTime();
     });
 
     io.on('connection', function(socket) {
