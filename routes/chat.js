@@ -1,12 +1,16 @@
 var Authentication = require('../config/auth.js');
+var cookieParser = require('cookie-parser');
 
 module.exports = function(app, passport, io, express, sessionStore) {
     var router = express.Router();
     var userSocketMap = {};
     var usernames = [];
+    var sessionId
 
     var lastMessages = [];
     var numMessagesToSave = 5;
+
+    var EXPRESS_SESSION_COOKIE = 'connect.sid';
 
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
@@ -16,6 +20,48 @@ module.exports = function(app, passport, io, express, sessionStore) {
         res.render('chat', { title: 'My Simple Chat', user: req.user });
 
         req.session.lastAccess = new Date().getTime();
+    });
+
+    io.set('authorization', function(data, callback) {
+        console.log('Socket IO attempting to authorize user...');
+
+        if (!data.headers.cookie) {
+            console.log('No cookie sent with the socketio request');
+            return callback('No cookie was sent with the socketio request', false);
+        }
+
+        //Parse the cookie with Express cookie parser
+        cookieParser(data, {}, function(err) {
+
+            console.log('Starting cookie parser...');
+            if (err) {
+                console.log('Could not parse cookie');
+                return callback('Error while attempting to parse cookie', false);
+            }
+
+            //Get the session id cookie
+            var sessionCookie = (data.secureCookies && data.secureCookies[EXPRESS_SESSION_COOKIE]) ||
+                                (data.signedCookies && data.signedCookies[EXPRESS_SESSION_COOKIE]) ||
+                                (data.cookies && data.cookies[EXPRESS_SESSION_COOKIE]);
+
+            console.log('Retrieved session cookie: ' + sessionCookie);
+
+            //Now load the session from the express session store
+            sessionStore.load(sessionCookie, function(err, session) {
+                if (err || !session || !session.isLogged) {
+                    console.log('User is not logged in');
+                    callback('User is not logged in.', false);
+                } else {
+                    console.log('User is logged in');
+                    data.session = session;
+
+                    callback(null, true);
+                }
+            });
+        });
+
+        console.log('Completed socket IO authorization');
+        callback(null, true);
     });
 
     io.on('connection', function(socket) {
