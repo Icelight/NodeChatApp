@@ -12,56 +12,40 @@ module.exports = function(app, passport, io, express, sessionStore) {
 
     var EXPRESS_SESSION_COOKIE = 'connect.sid';
 
+
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
         console.log("User: " + req.session.passport.user + " has connected to the chat.");
-        console.log(req.session);
+        console.log("Session Id: " + req.session.id);
         console.log(req.user);
+        res.locals.sessionId = req.session.id;
         res.render('chat', { title: 'My Simple Chat', user: req.user });
 
         req.session.lastAccess = new Date().getTime();
     });
 
-    io.set('authorization', function(data, callback) {
-        console.log('Socket IO attempting to authorize user...');
+    io.use(function(socket, callback) {
 
-        if (!data.headers.cookie) {
-            console.log('No cookie sent with the socketio request');
-            return callback('No cookie was sent with the socketio request', false);
-        }
+        console.log('Performing socketio handshake');
+        
+        if (socket && socket.handshake && socket.handshake.query && socket.handshake.query.sessionId) {
+            var sessionId = socket.handshake.query.sessionId;
+            sessionStore.get(sessionId, function(error, session) {
+                socket.handshake.sessionId = sessionId;
 
-        //Parse the cookie with Express cookie parser
-        cookieParser(data, {}, function(err) {
+                if (error) {
+                    callback('Could not set session id with socket io authorization handshake!', false);
+                } else if (!session) {
+                    callback('There was no session found during socket io authorization handshake!', false);
+                } 
 
-            console.log('Starting cookie parser...');
-            if (err) {
-                console.log('Could not parse cookie');
-                return callback('Error while attempting to parse cookie', false);
-            }
-
-            //Get the session id cookie
-            var sessionCookie = (data.secureCookies && data.secureCookies[EXPRESS_SESSION_COOKIE]) ||
-                                (data.signedCookies && data.signedCookies[EXPRESS_SESSION_COOKIE]) ||
-                                (data.cookies && data.cookies[EXPRESS_SESSION_COOKIE]);
-
-            console.log('Retrieved session cookie: ' + sessionCookie);
-
-            //Now load the session from the express session store
-            sessionStore.load(sessionCookie, function(err, session) {
-                if (err || !session || !session.isLogged) {
-                    console.log('User is not logged in');
-                    callback('User is not logged in.', false);
-                } else {
-                    console.log('User is logged in');
-                    data.session = session;
-
-                    callback(null, true);
-                }
+                socket.session = session;
+                callback(null, true);
             });
-        });
-
-        console.log('Completed socket IO authorization');
-        callback(null, true);
+        } else {
+            console.log('No sessionId value was provided in query string to socket io connect from client');
+            callback('No sessionId value was provided in query string to socket io connect from client', false);
+        }
     });
 
     io.on('connection', function(socket) {

@@ -30,8 +30,10 @@ app.use(flash());
 app.use(cookieParser());
 app.use(bodyParser());
 
+var sessionStore = new MongoStore({db: mongoose.connection.db});
+
 app.use(session({
-    store: new MongoStore({ db: mongoose.connection.db }),
+    store: sessionStore,
     secret: 'thisismysupersecret',
     clear_interval: 900,
     cookie: {maxAge: 1000 * 60 * 60 * 2}
@@ -53,7 +55,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 var routes = require('./routes/index')(app, passport, express);
 var users = require('./routes/users')(app, passport, express);
-var chat = require('./routes/chat')(app, passport, io, express, MongoStore);
+var chat = require('./routes/chat')(app, passport, io, express, sessionStore);
 
 app.use('/', routes);
 app.use('/users', users);

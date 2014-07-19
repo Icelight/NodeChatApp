@@ -1,5 +1,3 @@
-var socket = io();
-
 function addMessage(parent, message, cssClass, autoScroll) {
     parent.append('<p class="' + cssClass + '">' + message + '</p>');
 
@@ -19,6 +17,9 @@ function removeUser(userElement, username) {
 $(document).ready(function() {
     var chatbox = $('#chatbox');
     var userbox = $('#userContainer');
+    var sessionid = $('#sessionid').val();
+
+    var socket = io.connect('http://localhost?sessionId=' + sessionid);
 
     socket.emit('init', {'username': 'test-user'});
 
