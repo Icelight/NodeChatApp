@@ -12,22 +12,21 @@ module.exports = function(app, passport, io, express, sessionStore) {
 
     var EXPRESS_SESSION_COOKIE = 'connect.sid';
 
-
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
         console.log("User: " + req.session.passport.user + " has connected to the chat.");
         console.log("Session Id: " + req.session.id);
         console.log(req.user);
+
+        req.session.user = req.user;
+        console.log(req.session);
+
         res.locals.sessionId = req.session.id;
         res.render('chat', { title: 'My Simple Chat', user: req.user });
-
-        req.session.lastAccess = new Date().getTime();
     });
 
     io.use(function(socket, callback) {
 
-        console.log('Performing socketio handshake');
-        
         if (socket && socket.handshake && socket.handshake.query && socket.handshake.query.sessionId) {
             var sessionId = socket.handshake.query.sessionId;
             sessionStore.get(sessionId, function(error, session) {
@@ -39,11 +38,12 @@ module.exports = function(app, passport, io, express, sessionStore) {
                     callback('There was no session found during socket io authorization handshake!', false);
                 } 
 
+                console.log(session);
+
                 socket.session = session;
                 callback(null, true);
             });
         } else {
-            console.log('No sessionId value was provided in query string to socket io connect from client');
             callback('No sessionId value was provided in query string to socket io connect from client', false);
         }
     });
@@ -72,6 +72,7 @@ module.exports = function(app, passport, io, express, sessionStore) {
         });
 
         socket.on('init', function(info) {
+            console.log(socket.session);
             if (info && info.hasOwnProperty('username')) {
                 userSocketMap[socket.id] = info.username;
                 usernames.push(info.username);
