@@ -21,7 +21,7 @@ $(document).ready(function() {
 
     var socket = io.connect('http://localhost?sessionId=' + sessionid);
 
-    socket.emit('init', {'username': 'test-user'});
+    socket.emit('init');
 
     socket.on('message', function(message) {
         addMessage(chatbox, message.message, getMessageClass(message), true);

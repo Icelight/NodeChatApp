@@ -14,7 +14,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-var MongoStore = require('connect-mongostore')(session);
+var RedisStore = require('connect-redis')(session);
 
 var app = express();
 var server = app.listen(port);
@@ -30,13 +30,13 @@ app.use(flash());
 app.use(cookieParser());
 app.use(bodyParser());
 
-var sessionStore = new MongoStore({db: mongoose.connection.db});
+var sessionStore = new RedisStore({host:'localhost', port: 6379, prefix: 'chat-session'});
 
 app.use(session({
     store: sessionStore,
     secret: 'thisismysupersecret',
     clear_interval: 900,
-    cookie: {maxAge: 1000 * 60 * 60 * 2}
+    cookie: {maxAge: 1000 * 60}
 }));
 
 app.use(passport.initialize());

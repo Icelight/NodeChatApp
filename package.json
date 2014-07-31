@@ -20,6 +20,6 @@
     "bcrypt-nodejs" : "latest",
     "mongoose": "latest",
     "connect-flash": "latest",
-    "connect-mongostore": "latest"
+    "connect-redis": "latest"
   }
 }

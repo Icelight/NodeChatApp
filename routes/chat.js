@@ -14,21 +14,28 @@ module.exports = function(app, passport, io, express, sessionStore) {
 
     /* GET chat page */
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
-        console.log("User: " + req.session.passport.user + " has connected to the chat.");
-        console.log("Session Id: " + req.session.id);
-        console.log(req.user);
-
         req.session.user = req.user;
-        console.log(req.session);
-
         res.locals.sessionId = req.session.id;
-        res.render('chat', { title: 'My Simple Chat', user: req.user });
+
+        req.session.save(function(error) {
+
+            if (error) {
+                console.log("Error while saving session: ", error);
+            }
+
+            res.render('chat', { title: 'My Simple Chat', user: req.user });
+        });
     });
 
     io.use(function(socket, callback) {
 
+        console.log("Checking session...");
+
         if (socket && socket.handshake && socket.handshake.query && socket.handshake.query.sessionId) {
             var sessionId = socket.handshake.query.sessionId;
+
+            console.log("socketio retrieving session with id: " + sessionId);
+
             sessionStore.get(sessionId, function(error, session) {
                 socket.handshake.sessionId = sessionId;
 
@@ -37,8 +44,6 @@ module.exports = function(app, passport, io, express, sessionStore) {
                 } else if (!session) {
                     callback('There was no session found during socket io authorization handshake!', false);
                 } 
-
-                console.log(session);
 
                 socket.session = session;
                 callback(null, true);
@@ -64,18 +69,16 @@ module.exports = function(app, passport, io, express, sessionStore) {
 
             delete userSocketMap[socket.id];
 
-            console.log(usernames);
-            console.log(userSocketMap);
-
             //Broadcast to all active clients that a user just left.
             socket.broadcast.emit('user-left', {'username': username});
         });
 
-        socket.on('init', function(info) {
-            console.log(socket.session);
-            if (info && info.hasOwnProperty('username')) {
-                userSocketMap[socket.id] = info.username;
-                usernames.push(info.username);
+        socket.on('init', function() {
+
+            if (socket.session) {
+                var username = socket.session.user.localUser.username;
+                userSocketMap[socket.id] = username;
+                usernames.push(username);
 
                 //Send the welcome message and a list of all current users to the new user.
                 socket.emit('message', {'user': 'system', 'message': 'Welcome to the chat!'});  
@@ -88,21 +91,25 @@ module.exports = function(app, passport, io, express, sessionStore) {
                 }   
 
                 //Send the new user to all current clients
-                socket.broadcast.emit('user-joined', {'username': info.username}); 
+                socket.broadcast.emit('user-joined', {'username': username}); 
             }
         });
 
         socket.on('send-message', function(message) {
-            console.log('Received message: ' + message.message + ' from user: ' + message.user);
 
-            lastMessages.push(message);
+            if (socket.session) {
+                var username = socket.session.user.localUser.username;
+                console.log('Received message: ' + message.message + ' from user: ' + username);
 
-            if (lastMessages.length > numMessagesToSave) {
-                lastMessages.shift();
+                lastMessages.push(message);
+
+                if (lastMessages.length > numMessagesToSave) {
+                    lastMessages.shift();
+                }
+
+                socket.broadcast.emit('message', message);
+                socket.emit('message-sent', {'success': 'true', 'message': message.message});
             }
-
-            socket.broadcast.emit('message', message);
-            socket.emit('message-sent', {'success': 'true', 'message': message.message});
         });
     });
 

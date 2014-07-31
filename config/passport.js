@@ -47,9 +47,9 @@ module.exports = function(passport) {
     );
 
     passport.use('local-login', new LocalStrategy({
-        usernameField : 'username',
-        passwordField : 'password',
-        passReqToCallback : true
+            usernameField : 'username',
+            passwordField : 'password',
+            passReqToCallback : true
         },
         function (req, username, password, doneCallback) {
             console.log("Received login request from username: " + username);
