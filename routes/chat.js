@@ -1,5 +1,6 @@
 var Authentication = require('../config/auth.js');
 var cookieParser = require('cookie-parser');
+var expressSession = require('express-session');
 
 module.exports = function(app, passport, io, express, sessionStore) {
     var router = express.Router();
@@ -16,6 +17,12 @@ module.exports = function(app, passport, io, express, sessionStore) {
     router.get('/',  Authentication.redirectIfNotAuthenticated, function(req, res) {
         req.session.user = req.user;
         res.locals.sessionId = req.session.id;
+
+        //var intervalId = setInterval(function() {
+        //    req.session._garbage = Date();
+        //    req.session.touch().save();  
+        //    console.log("Touched session");
+        //}, 1000);
 
         req.session.save(function(error) {
 
@@ -37,7 +44,7 @@ module.exports = function(app, passport, io, express, sessionStore) {
             console.log("socketio retrieving session with id: " + sessionId);
 
             sessionStore.get(sessionId, function(error, session) {
-                socket.handshake.sessionId = sessionId;
+                socket.sessionId = sessionId;
 
                 if (error) {
                     callback('Could not set session id with socket io authorization handshake!', false);
@@ -54,10 +61,11 @@ module.exports = function(app, passport, io, express, sessionStore) {
     });
 
     io.on('connection', function(socket) {
+
         console.log("A user has connected to socket.io");
 
         socket.on('disconnect', function() {
-            var username = userSocketMap[socket.id];
+            var username = userSocketMap[socket.sessionId];
 
             console.log('User ' + '"' + username + '"' + ' has disconnected from the chat');
 
@@ -67,18 +75,28 @@ module.exports = function(app, passport, io, express, sessionStore) {
                 usernames.splice(index, 1);
             }
 
-            delete userSocketMap[socket.id];
+            delete userSocketMap[socket.sessionId];
 
             //Broadcast to all active clients that a user just left.
             socket.broadcast.emit('user-left', {'username': username});
         });
 
-        socket.on('init', function() {
+        socket.on('join', function() {
+
+            var alreadyJoined = false;
+
+            if (socket.sessionId in userSocketMap) {
+                console.log("User with session " + socket.sessionId + " has already joined.");
+                alreadyJoined = true;
+            }
 
             if (socket.session) {
+
                 var username = socket.session.user.localUser.username;
-                userSocketMap[socket.id] = username;
+                userSocketMap[socket.sessionId] = username;
                 usernames.push(username);
+
+                socket.username = username;
 
                 //Send the welcome message and a list of all current users to the new user.
                 socket.emit('message', {'user': 'system', 'message': 'Welcome to the chat!'});  
@@ -90,26 +108,33 @@ module.exports = function(app, passport, io, express, sessionStore) {
                     socket.emit('messages', messages);
                 }   
 
-                //Send the new user to all current clients
-                socket.broadcast.emit('user-joined', {'username': username}); 
+                //Send the new user to all current clients only if this is a newly joined user.
+                if (!alreadyJoined) {
+                    socket.broadcast.emit('user-joined', {'username': username}); 
+                }
             }
         });
 
         socket.on('send-message', function(message) {
 
-            if (socket.session) {
-                var username = socket.session.user.localUser.username;
-                console.log('Received message: ' + message.message + ' from user: ' + username);
+            sessionStore.get(socket.sessionId, function(error, session) {
 
-                lastMessages.push(message);
+                if (error || !session) {
+                    console.log("Error:", error);
+                    socket.emit('message-sent', {'success': false, 'error': 'session-expired'});
+                } else {
+                    console.log('Received message: ' + message.message + ' from user: ' + socket.username);
 
-                if (lastMessages.length > numMessagesToSave) {
-                    lastMessages.shift();
+                    lastMessages.push(message);
+
+                    if (lastMessages.length > numMessagesToSave) {
+                        lastMessages.shift();
+                    }
+
+                    socket.broadcast.emit('message', message);
+                    socket.emit('message-sent', {'success': true, 'message': message.message});
                 }
-
-                socket.broadcast.emit('message', message);
-                socket.emit('message-sent', {'success': 'true', 'message': message.message});
-            }
+            });
         });
     });
 

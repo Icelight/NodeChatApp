@@ -6,6 +6,10 @@ function addMessage(parent, message, cssClass, autoScroll) {
     }
 }
 
+function clearUsers() {
+    $('#userContainer').empty();
+}
+
 function getMessageClass(message) {
     return message.user === 'system' ? 'sys-message' : 'ext-message';
 }
@@ -21,7 +25,7 @@ $(document).ready(function() {
 
     var socket = io.connect('http://localhost?sessionId=' + sessionid);
 
-    socket.emit('init');
+    socket.emit('join');
 
     socket.on('message', function(message) {
         addMessage(chatbox, message.message, getMessageClass(message), true);
@@ -44,6 +48,8 @@ $(document).ready(function() {
     socket.on('userlist', function(userlist) {
         console.log("Recieved user list: ");
         console.log(userlist);
+
+        clearUsers();
 
         for (i = 0; i < userlist.length; i++) {
             addMessage(userbox, userlist[i], 'username', false);
