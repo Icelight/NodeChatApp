@@ -11,7 +11,15 @@ function clearUsers() {
 }
 
 function getMessageClass(message) {
-    return message.user === 'system' ? 'sys-message' : 'ext-message';
+    var myUsername = $('#username').val();
+
+    if (message.user === myUsername) {
+        return 'my-message';
+    } else if (message.user === 'system') {
+        return 'sys-message';
+    } 
+
+    return 'ext-message';
 }
 
 function removeUser(userElement, username) {
@@ -40,8 +48,8 @@ $(document).ready(function() {
     });
 
     socket.on('message-sent', function(result) {
-        if (result.success) {
-            addMessage(chatbox, result.message, 'my-message', true);
+        if (!result.success && result.error === 'session-exipired') {
+            window.location.href = "/login";
         }
     });
 

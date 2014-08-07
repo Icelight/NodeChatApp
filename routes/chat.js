@@ -18,12 +18,6 @@ module.exports = function(app, passport, io, express, sessionStore) {
         req.session.user = req.user;
         res.locals.sessionId = req.session.id;
 
-        //var intervalId = setInterval(function() {
-        //    req.session._garbage = Date();
-        //    req.session.touch().save();  
-        //    console.log("Touched session");
-        //}, 1000);
-
         req.session.save(function(error) {
 
             if (error) {
@@ -65,20 +59,29 @@ module.exports = function(app, passport, io, express, sessionStore) {
         console.log("A user has connected to socket.io");
 
         socket.on('disconnect', function() {
-            var username = userSocketMap[socket.sessionId];
 
-            console.log('User ' + '"' + username + '"' + ' has disconnected from the chat');
+            //Remove the user from the list if they have no open connections for their session.
+            //Otherwise just decrement the number of active connections for that session and call it a day!
+            if (socket.sessionId in userSocketMap) {
+                var userInfo = userSocketMap[socket.sessionId];
 
-            index = usernames.indexOf(username);
+                userSocketMap[socket.sessionId].active--;
 
-            if (index >= 0) {
-                usernames.splice(index, 1);
+                if (userSocketMap[socket.sessionId].active <= 0) {
+                    console.log('User ' + '"' + userInfo.username + '"' + ' has disconnected from the chat');
+                    
+                    index = usernames.indexOf(userInfo.username);
+
+                    if (index >= 0) {
+                        usernames.splice(index, 1);
+                    }
+
+                    delete userSocketMap[socket.sessionId];
+
+                    //Broadcast to all active clients that a user just left.
+                    socket.broadcast.emit('user-left', {'username': userInfo.username});
+                }
             }
-
-            delete userSocketMap[socket.sessionId];
-
-            //Broadcast to all active clients that a user just left.
-            socket.broadcast.emit('user-left', {'username': username});
         });
 
         socket.on('join', function() {
@@ -93,8 +96,18 @@ module.exports = function(app, passport, io, express, sessionStore) {
             if (socket.session) {
 
                 var username = socket.session.user.localUser.username;
-                userSocketMap[socket.sessionId] = username;
-                usernames.push(username);
+
+                //If the user has already joined we don't want to send out a message
+                //saying that a new user has joined, nor do we want to add them
+                //to the user list. 
+                if (!alreadyJoined) {
+                    userSocketMap[socket.sessionId] = {'username': username, 'active': 1};
+                    usernames.push(username);
+
+                    socket.broadcast.emit('user-joined', {'username': username}); 
+                } else {
+                    userSocketMap[socket.sessionId].active++;
+                }
 
                 socket.username = username;
 
@@ -107,11 +120,6 @@ module.exports = function(app, passport, io, express, sessionStore) {
                     var messages = JSON.stringify(lastMessages);
                     socket.emit('messages', messages);
                 }   
-
-                //Send the new user to all current clients only if this is a newly joined user.
-                if (!alreadyJoined) {
-                    socket.broadcast.emit('user-joined', {'username': username}); 
-                }
             }
         });
 
@@ -124,6 +132,7 @@ module.exports = function(app, passport, io, express, sessionStore) {
                     socket.emit('message-sent', {'success': false, 'error': 'session-expired'});
                 } else {
                     console.log('Received message: ' + message.message + ' from user: ' + socket.username);
+                    message.user = socket.username;
 
                     lastMessages.push(message);
 
@@ -131,7 +140,7 @@ module.exports = function(app, passport, io, express, sessionStore) {
                         lastMessages.shift();
                     }
 
-                    socket.broadcast.emit('message', message);
+                    io.sockets.emit('message', message);
                     socket.emit('message-sent', {'success': true, 'message': message.message});
                 }
             });

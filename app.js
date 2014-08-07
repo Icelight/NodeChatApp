@@ -19,8 +19,6 @@ var RedisStore = require('connect-redis')(session);
 var app = express();
 var server = app.listen(port);
 
-var socketHandshake = require('socket.io-handshake');
-
 var io = require('socket.io').listen(server);
 
 // -- Configuration --
