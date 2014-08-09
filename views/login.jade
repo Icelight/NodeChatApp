@@ -1,18 +1,20 @@
 extends layout
 
+block cssLinks
+    link(rel='stylesheet', href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css')
+
 block content
     script(src='http://code.jquery.com/jquery-2.1.1.min.js')
     h1= title
 
     div
-        h2= "Please log in with your username and password"
 
-        unless message.length <= 0
-            div#errorMessageDiv #{message}
-
-        form#loginForm(action='/login',method='POST')
-            label(for="username") Username
-            input#username(type="text" name="username" maxlength="24")
-            label(for="password") Password
-            input#password(type="password" name="password" maxlength="128")
-            button#loginButton(type="submit") Login
+        form#loginForm(action='/login',class='pure-form',method='POST')
+            fieldset
+                legend Please log in with your username and password
+                input#username(type="text" name="username" placeholder="Username" maxlength="24")
+                input#password(type="password" name="password" placeholder="Password" maxlength="128")
+                button#loginButton(type="submit" class='pure-button pure-button-primary') Login
+                
+                unless message.length <= 0
+                    div#errorMessageDiv #{message}

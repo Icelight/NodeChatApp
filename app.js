@@ -37,7 +37,7 @@ app.use(session({
     store: sessionStore,
     secret: 'thisismysupersecret',
     clear_interval: 900,
-    cookie: {maxAge: 1000 * 60 * 60 * 720, httpOnly: true, secure: true},
+    cookie: {maxAge: 1000 * 60 * 60 * 1, httpOnly: true},
     rolling: true
 }));
 

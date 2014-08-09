@@ -1,19 +1,21 @@
 extends layout
 
+block cssLinks
+    link(rel='stylesheet', href='http://yui.yahooapis.com/pure/0.5.0/pure-min.css')
+
 block content
     script(src='http://code.jquery.com/jquery-2.1.1.min.js')
     script(src='/javascripts/signup.js')
     h1= title
 
     div
-        h2= "Please choose a username and password!"
 
-        unless message.length <= 0
-            div#errorMessageDiv #{message}
-
-        form#signupForm(action='/signup',method='POST')
-            label(for="username") Username
-            input#username(type="text" name="username" maxlength="24")
-            label(for="password") Password
-            input#password(type="password" name="password" maxlength="128")
-            button#signupButton(type="submit") Signup
+        form#signupForm(action='/signup',class='pure-form',method='POST')
+            fieldset
+                legend Please choose a username and password
+                input#username(type='text' name='username' placeholder='Username' maxlength='24')
+                input#password(type='password' name='password' placeholder='Password' maxlength='128')
+                button#signupButton(type='submit' class='pure-button pure-button-primary') Signup
+                
+                unless message.length <= 0
+                    div#errorMessageDiv #{message}
