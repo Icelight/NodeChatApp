@@ -5,6 +5,7 @@ var expressSession = require('express-session');
 module.exports = function(app, passport, io, express, sessionStore) {
     var router = express.Router();
     var userSocketMap = {};
+    var connectedUsers = {};
     var usernames = [];
     var sessionId
 
@@ -61,52 +62,66 @@ module.exports = function(app, passport, io, express, sessionStore) {
         socket.on('disconnect', function() {
 
             //Remove the user from the list if they have no open connections for their session.
-            //Otherwise just decrement the number of active connections for that session and call it a day!
-            if (socket.sessionId in userSocketMap) {
-                var userInfo = userSocketMap[socket.sessionId];
+            //Otherwise just remove the disconnected socket id and call it a day!
+            var username = socket.session.user.localUser.username;
+            var userId = socket.session.user._id;
 
-                userSocketMap[socket.sessionId].active--;
+            if (userId in connectedUsers) {
+                console.log("User " + userId + " has disconnected from the chat.");
+                var index = connectedUsers[userId].indexOf(socket.id);
 
-                if (userSocketMap[socket.sessionId].active <= 0) {
-                    console.log('User ' + '"' + userInfo.username + '"' + ' has disconnected from the chat');
-                    
-                    index = usernames.indexOf(userInfo.username);
+                if (index >= 0) {
+                    connectedUsers[userId].splice(index, 1);
+                }
+
+                if (connectedUsers[userId].length == 0) {
+                    delete connectedUsers[userId];
+
+                    index = usernames.indexOf(username);
 
                     if (index >= 0) {
                         usernames.splice(index, 1);
                     }
 
-                    delete userSocketMap[socket.sessionId];
-
                     //Broadcast to all active clients that a user just left.
-                    socket.broadcast.emit('user-left', {'username': userInfo.username});
+                    socket.broadcast.emit('user-left', {'username' : username});
+
+                    console.log("User " + userId + " has no more active connections open");
                 }
             }
         });
 
         socket.on('join', function() {
 
-            var alreadyJoined = false;
-
-            if (socket.sessionId in userSocketMap) {
-                console.log("User with session " + socket.sessionId + " has already joined.");
-                alreadyJoined = true;
-            }
-
             if (socket.session) {
 
+                var alreadyJoined = false;
                 var username = socket.session.user.localUser.username;
+                var userId = socket.session.user._id;
+
+                if (userId in connectedUsers) {
+                    console.log("User with id " + userId + " has already joined.");
+
+                    if (connectedUsers[userId].indexOf(socket.id) < 0) {
+                        connectedUsers[userId].push(socket.id);
+                    }
+
+                    console.log(connectedUsers[userId]);
+
+                    alreadyJoined = true;
+                } else {
+                    connectedUsers[userId] = [socket.id];
+
+                    console.log("User with id " + userId + " has joined for the first time.");
+                    console.log(connectedUsers[userId]);
+                }
 
                 //If the user has already joined we don't want to send out a message
                 //saying that a new user has joined, nor do we want to add them
                 //to the user list. 
                 if (!alreadyJoined) {
-                    userSocketMap[socket.sessionId] = {'username': username, 'active': 1};
                     usernames.push(username);
-
                     socket.broadcast.emit('user-joined', {'username': username}); 
-                } else {
-                    userSocketMap[socket.sessionId].active++;
                 }
 
                 socket.username = username;
